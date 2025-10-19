@@ -78,9 +78,9 @@ def tasks_verify():
 
 
 def main():
-
     if dir_verify() == True:
         tasks_verify()
+        tasks_manager.main()
 
 
 if __name__ == "__main__":
