@@ -14,7 +14,7 @@ file_path = {
     "core/tasks_manager.py": False 
 }
 
-data = {"id": [], "tasks": [], "projects": [], "date": [], "priority": []}
+data = {"id": [], "tasks": [], "projects": [], "date": [], "priority": [], "status": []}
 json_string = json.dumps(data)
 
 def dir_verify():
@@ -68,7 +68,6 @@ def tasks_verify():
     try:
         files = open("data/tasks.json", "r")
         tasks_data = json.load(files)
-        print(tasks_data)
 
     except:
         files = open("data/tasks.json", "w")
