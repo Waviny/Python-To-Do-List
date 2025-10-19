@@ -82,6 +82,7 @@ def edit_task(tasks_data):
     choice = int(input("Select ID to REMOVE the task : "))
     if choice in existings_id:
         position = tasks_data["id"].index(choice)
+        print("Editable fields: tasks | projects | date | priority")
         edit_choice = input("What do you want to edit : ")
         if edit_choice in valid_choice:
             change_choice = input("What is the new values : ")
