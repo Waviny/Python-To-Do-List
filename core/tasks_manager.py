@@ -1,144 +1,86 @@
 import json
+import os
 
-data = {"id": [], "tasks": [], "projects": [], "date": [], "priority": [], "status": []}
-json_string = json.dumps(data)
+# --- Données par défaut ---
+DATA_FILE = "data/tasks.json"
+DEFAULT_DATA = {"id": [], "tasks": [], "projects": [], "date": [], "priority": [], "status": []}
 
+
+# --- Chargement des tâches ---
 def load_tasks():
+    """Charge les tâches depuis le fichier JSON ou crée le fichier s'il n'existe pas."""
+    if not os.path.exists("data"):
+        os.makedirs("data")
 
-    try:
-        files = open("data/tasks.json", "r")
-        tasks_data = json.load(files)
-        return tasks_data
+    if not os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(DEFAULT_DATA, f, indent=4)
+        print("✅ Nouveau fichier tasks.json créé.")
+        return DEFAULT_DATA
 
-    except:
-        files = open("data/tasks.json", "w")
-        files.write(json_string)
-        print("JSON Files are loaded")
-        files.close()
-        return data
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+            return data
+        except json.JSONDecodeError:
+            print("⚠️ Fichier JSON corrompu. Réinitialisation...")
+            save_tasks(DEFAULT_DATA)
+            return DEFAULT_DATA
 
-loaded_data = load_tasks()
 
-def display_tasks(tasks_data):
-    print(f"ID: {tasks_data["id"]} | Task: {tasks_data["tasks"]} | Project: {tasks_data["projects"]} | Date: {tasks_data["date"]} | Priority: {tasks_data["priority"]} | Status: {tasks_data["status"]}")
+# --- Sauvegarde des tâches ---
+def save_tasks(data):
+    """Sauvegarde les tâches dans le fichier JSON."""
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
-def menu():
 
-    while True:
-        print("1 - ADD TASK\n" \
-        "2 - REMOVE TASK\n" \
-        "3 - EDIT TASK\n" \
-        "4- LEAVE")
+# --- Ajouter une tâche ---
+def add_task(task_data):
+    """Ajoute une tâche au fichier JSON."""
+    data = load_tasks()
+    new_id = data["id"][-1] + 1 if data["id"] else 1
 
-        choice = int(input("Enter you're choice : "))
+    data["id"].append(new_id)
+    data["tasks"].append(task_data["task"])
+    data["projects"].append(task_data["project"])
+    data["date"].append(task_data["date"])
+    data["priority"].append(task_data["priority"])
+    data["status"].append(task_data["status"])
 
-        if choice == 1:
-            add_tasks(loaded_data)
-            save_tasks(loaded_data)
+    save_tasks(data)
+    return new_id
 
-        elif choice == 2:
-            remove_task(loaded_data)
-            save_tasks(loaded_data)
 
-        elif choice == 3:
-            edit_task(loaded_data)
-            save_tasks(loaded_data)
+# --- Supprimer une tâche ---
+def remove_task(task_id):
+    """Supprime une tâche par ID."""
+    data = load_tasks()
 
-        elif choice == 4:
-            break
-
-def add_tasks(tasks_data):
-
-    list_status = ["pending", "in progress", "done"]
-    task_name = input("Enter you're task name : ")
-    task_project = input("Enter you're task project : ")
-    task_date = input("Enter you're task date : ")
-    while True:
-        task_priority = int(input("Enter you're task priority ( 1 - 10 ) : "))
-        if 1<= task_priority <= 10:
-            break
-        else:
-            print("Invalid priority, 1 - 10")
-    
-    while True:
-        task_status = input("Enter the status of you're task : ")
-        if task_status in list_status:
-            break
-        else:
-            print("Invalid status (pending, in progress or done)")
-
-    if len(tasks_data["id"]) == 0:
-        index = 0
-
+    if task_id in data["id"]:
+        idx = data["id"].index(task_id)
+        for key in data.keys():
+            data[key].pop(idx)
+        save_tasks(data)
+        return True
     else:
-        index = tasks_data["id"][-1]
+        print(f"Tâche {task_id} introuvable.")
+        return False
 
-    tasks_data["id"].append(index+1)
-    tasks_data["tasks"].append(task_name)
-    tasks_data["projects"].append(task_project)
-    tasks_data["date"].append(task_date)
-    tasks_data["priority"].append(task_priority)
-    tasks_data["status"].append(task_status)
-    save_tasks(tasks_data)
 
-def remove_task(tasks_data):
+# --- Modifier une tâche ---
+def edit_task(task_id, field, new_value):
+    """Modifie un champ spécifique d'une tâche."""
+    data = load_tasks()
 
-    load_tasks()
+    valid_fields = ["tasks", "projects", "date", "priority", "status"]
+    if field not in valid_fields:
+        raise ValueError(f"Champ invalide : {field}")
 
-    display_tasks(tasks_data)
+    if task_id not in data["id"]:
+        raise ValueError(f"Tâche ID {task_id} introuvable")
 
-    choice = int(input("Select ID to REMOVE the task : "))
-    position = tasks_data["id"].index(choice)
-
-    for i in tasks_data["id"]:
-
-        if choice == i:
-            tasks_data["id"].pop(position)
-            tasks_data["tasks"].pop(position)
-            tasks_data["projects"].pop(position)
-            tasks_data["date"].pop(position)
-            tasks_data["priority"].pop(position)
-            tasks_data["status"].pop(position)
-
-    save_tasks(tasks_data)  
-
-def edit_task(tasks_data):
-
-    load_tasks()
-    existings_id = tasks_data["id"]
-    valid_choice = ["tasks", "projects", "data", "priority", "status"]
-
-    display_tasks(tasks_data)
-
-    choice = int(input("Select ID to REMOVE the task : "))
-
-    if choice in existings_id:
-        position = tasks_data["id"].index(choice)
-        print("Editable fields: tasks | projects | date | priority")
-        edit_choice = input("What do you want to edit : ")
-
-        if edit_choice in valid_choice:
-            change_choice = input("What is the new values : ")
-            tasks_data[edit_choice][position] = change_choice
-            save_tasks(tasks_data)
-
-        else:
-            print("Invalid fields choice ! ")
-
-    else:
-        print("Inval input choice ! ")
-        edit_task(tasks_data)
-
-def save_tasks(tasks_data):
-
-    any_tasks = json.dumps(tasks_data)
-    files = open("data/tasks.json", "w")
-    files.write(any_tasks)
-    print("Tasks saved successfully")
-    files.close()
-
-def main():
-    menu()
-    
-if __name__ == "__main__":
-    main()
+    idx = data["id"].index(task_id)
+    data[field][idx] = new_value
+    save_tasks(data)
+    return True
